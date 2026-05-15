@@ -27,7 +27,8 @@ def research_property(address: str, business_name: str) -> dict:
     """
 
     # Branch prompt based on whether a tenant was provided
-    tenant_section = f"""2. **Tenant / Business News**
+    tenant_section = f"""
+    2. **Tenant / Business News**
    - Recent news about {business_name} at this location or in this market
    - Any closures, expansions, relocations, or financial stress signals
    - Lease renewals or new lease announcements if found""" if business_name else \
@@ -35,7 +36,8 @@ def research_property(address: str, business_name: str) -> dict:
    - Any active for-sale or for-lease listings at this address
    - Listing broker or contact if findable
    - How long the property appears to have been vacant or on market
-   - Prior tenants at this address"""
+   - Prior tenants at this address
+   """
 
     tenant_line = f"Tenant / Business: {business_name}" if business_name else "Tenant / Business: Unknown / Vacant"
 

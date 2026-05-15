@@ -17,7 +17,7 @@ ToccoaIO/
 ├── keys/               # API credentials (not in git)
 │   ├── gemini_key.txt
 │   └── claude_key.txt
-└── test.py             # API connectivity check
+└── APItest.py             # API connectivity check
 ```
 
 ---
@@ -37,7 +37,7 @@ keys/claude_key.txt   ← Anthropic Claude API key
 
 **Verify connectivity:**
 ```bash
-python test.py
+python APItest.py
 ```
 
 **Run the app:**
