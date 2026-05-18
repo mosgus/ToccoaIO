@@ -6,7 +6,7 @@ print("ex tenant: Courtland Health Care Services")
 # --- Page Configuration ---
 st.set_page_config(
     page_title="Toccoa.IO {Proto 1}",
-    page_icon="🏢",
+    page_icon="🏔️",
     layout="centered"
 )
 
@@ -44,6 +44,12 @@ if run:
         # Display the structured report with markdown rendering for bold headers
         st.divider()
         st.subheader(f"Analyst Report — {address}")
+        st.download_button(
+            label="Download Report",
+            data=saved_report_path.read_text(encoding="utf-8"),
+            file_name=saved_report_path.name,
+            mime="text/markdown"
+        )
         st.markdown(analyst_report)
         st.caption(f"Saved report: {saved_report_path}")
 

@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 import re
 
-# --- API Client Initialization ---
+# Clanker Client Initialization 🤖
 with open("./keys/gemini_key.txt", "r") as f:
     gem_client = genai.Client(api_key=f.read().strip())
 
