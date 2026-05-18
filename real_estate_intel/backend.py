@@ -5,13 +5,26 @@ from datetime import datetime
 from pathlib import Path
 import re
 
-# Clanker Client Initialization 🤖
-with open("./keys/gemini_key.txt", "r") as f:
-    gem_client = genai.Client(api_key=f.read().strip())
+# Clanker API Init.
 
-with open("./keys/claude_key.txt", "r") as f:
-    claude_key = f.read().strip()
-    claude_client = anthropic.Anthropic(api_key=claude_key)
+    # Ms. Gemini
+try:
+    with open("./keys/gemini_key.txt", "r") as f:
+        _gemini_key = f.read().strip()
+except FileNotFoundError:
+    import streamlit as st
+    _gemini_key = st.secrets["GEMINI_KEY"]
+    
+    # Mr. Claude
+try:
+    with open("./keys/claude_key.txt", "r") as f:
+        _claude_key = f.read().strip()
+except FileNotFoundError:
+    import streamlit as st
+    _claude_key = st.secrets["CLAUDE_KEY"]
+
+gem_client = genai.Client(api_key=_gemini_key)
+claude_client = anthropic.Anthropic(api_key=_claude_key)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
