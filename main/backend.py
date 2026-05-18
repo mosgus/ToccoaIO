@@ -14,7 +14,7 @@ try:
 except FileNotFoundError:
     import streamlit as st
     _gemini_key = st.secrets["GEMINI_KEY"]
-    
+
     # Mr. Claude
 try:
     with open("./keys/claude_key.txt", "r") as f:
@@ -177,7 +177,7 @@ def save_analyst_report_md(address: str, business_name: str, analyst_report: str
 
     timestamp = datetime.now().strftime("%Y%m%d")
     slug = re.sub(r"[^A-Za-z0-9]+", "_", f"{address}_{business_name}").strip("_").lower()[:120]
-    output_path = ANALYSIS_DIR / f"{timestamp}_{slug}.md"
+    output_path = ANALYSIS_DIR / f"{slug}_{timestamp}.md"
 
     header = (
         f"# Analyst Report\n\n"

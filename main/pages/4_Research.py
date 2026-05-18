@@ -1,27 +1,14 @@
 import streamlit as st
+
+# ❗ignore unresolved references. Streamlit adds main to sys.path❗
 from backend import research_property, save_analyst_report_md, synthesize_report
 
-init_start = 0
-if init_start == 0:
-    print("ex addy: 3065 Peachtree Industrial Blvd")
-    print("ex tenant: Courtland Health Care Services")
-    init_start = 1
+st.title("Property Research")
+st.caption("Property and tenant research and report synthesizer. Powered by Gemini(Researcher) and Claude(Reporter) APIs.")
 
-# Page Configuration
-st.set_page_config(
-    page_title="Toccoa.IO {Proto 1}",
-    page_icon="🏔️",
-    layout="centered"
-)
-
-st.title("Toccoa.io {Proto 1.0}")
-st.caption("AI-powered property and tenant research for credit analysts")
-
-# Persist the latest analysis so it survives Streamlit reruns from downloads.
 if "analysis_result" not in st.session_state:
     st.session_state.analysis_result = None
 
-# Input Fields
 address = st.text_input(
     "Property Address",
     placeholder="e.g. 123 Main St, Atlanta, GA"
@@ -31,19 +18,15 @@ business_name = st.text_input(
     placeholder="e.g. Walgreens"
 )
 
-# Run Analysis Button
 run = st.button("Run Analysis", type="primary", disabled=not address)
 
-# Analysis Execution and Results Display
 if run:
     try:
-        # Step 1: Gemini web research
         with st.spinner("Researching property..."):
             gemini_result = research_property(address, business_name)
             gemini_output = gemini_result["research"]
             sources = gemini_result["sources"]
 
-        # Step 2: Claude synthesis into structured analyst report
         with st.spinner("Synthesizing analyst report..."):
             analyst_report = synthesize_report(address, business_name, gemini_output, sources)
 
@@ -63,23 +46,20 @@ if run:
 
 result = st.session_state.analysis_result
 if result:
-    # Display the structured report with markdown rendering for bold headers
     st.divider()
     st.subheader(f"Analyst Report — {result['address']}")
 
-    # Download Report 📥
     st.download_button(
         label="Download Report",
         data=result["saved_report_path"].read_text(encoding="utf-8"),
         file_name=result["saved_report_path"].name,
         mime="text/markdown",
-        icon=":material/download:" # download icon
+        icon=":material/download:"
     )
 
     st.markdown(result["analyst_report"])
     st.caption(f"Saved report: {result['saved_report_path']}")
 
-    # Expander for raw Gemini data as an audit trail for analysts
     with st.expander("Raw Gemini Research Data"):
         st.caption("Source data returned by Gemini Search — inline [N] numbers correspond to the sources list below.")
         st.markdown(result["gemini_output"])
