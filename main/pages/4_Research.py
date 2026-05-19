@@ -1,7 +1,7 @@
 import streamlit as st
 
 # ❗ignore unresolved references. Streamlit adds main to sys.path❗
-from backend import research_property, save_analyst_report_md, synthesize_report
+from LLM_service import research_property, save_analyst_report_md, synthesize_report
 
 st.title("Property Research")
 st.caption("Property and tenant research and report synthesizer. Powered by Gemini(Researcher) and Claude(Reporter) APIs.")
