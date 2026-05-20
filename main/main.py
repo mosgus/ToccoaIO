@@ -1,5 +1,4 @@
 from pathlib import Path
-
 import streamlit as st
 
 APP_ICON = Path(__file__).resolve().parent.parent / "app_assets" / "logo.PNG"

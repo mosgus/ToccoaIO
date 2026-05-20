@@ -7,12 +7,11 @@ claude_model = "claude-haiku-4-5-20251001"
 
 # Gemini Init
 with open("./keys/gemini_key.txt", "r") as f:
-    #gem_key = f.read().strip()
-    gem_client = genai.Client(api_key=f.read().strip())
+    gem_key = f.read().strip()
+    gem_client = genai.Client(api_key=gem_key)
 # Anthropic Init
 with open("./keys/claude_key.txt", "r") as f:
     claude_key = f.read().strip()
-    # Note: Using anthropic.Anthropic is the standard for the modern SDK
     claude_client = anthropic.Anthropic(api_key=claude_key)
 
 ''' API Tests '''
