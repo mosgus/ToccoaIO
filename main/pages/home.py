@@ -1,7 +1,7 @@
 import streamlit as st
 
 #st.title("Home")
-st.caption("ver 1.1")
+st.caption("ver 0.1")
 
 st.divider()
 
@@ -13,9 +13,9 @@ Use the navigation tabs on the left to access each module.
 
 | Module | Status | Description |
 |---|---|---|
-| **Business Development** | Coming soon | Pipeline and deal tracking |
-| **Asset Management** | Coming soon | Portfolio monitoring |
-| **Reporting** | Coming soon | Report generation and exports |
+| **Business Development** | Working on it | Pipeline and deal tracking |
+| **Asset Management** | Not started | Portfolio monitoring |
+| **Reporting** | Not Started | Report generation and exports |
 | **Research** | Live ✅ | Basic AI-powered property x tenant research |
-| **Extra** | Placeholder | Additional models and tools |
+| **Blank** | Placeholder | Additional models and tools. Likely a Cap Raising module |
 """)

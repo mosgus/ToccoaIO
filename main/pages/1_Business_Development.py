@@ -1,46 +1,84 @@
+import datetime
 import streamlit as st
 import pandas as pd
 
 # ❗ ignore unresolved references — Streamlit adds main/ to sys.path
-from db.mongo import init_deals_collection, get_all_deals, update_deal, STAGES
+from db.mongo import (
+    init_deals_collection, get_all_deals, update_deal,
+    STAGES, STATUSES, DEAL_TYPES, DEAL_SUBTYPES,
+    ASSET_CLASSES, DEVELOPMENTS, US_STATES,
+)
+
+# Human-readable column labels for the dataframe display
+_COL_LABELS = {
+    "id":                     "#",
+    "date_received":          "Date Received",
+    "deal_name":              "Deal Name",
+    "city":                   "City", # Extra Column
+    "state":                  "State",
+    "zip_code":               "Zip Code",
+    "tcm_originator":         "TCM Originator",
+    "broker":                 "Broker",
+    "brokerage_company":      "Brokerage Company",
+    "fund_investment_amount": "Fund Investment Amount",
+    "deal_size":              "Deal Size",
+    "deal_type":              "Deal Type",
+    "deal_subtype":           "Deal Subtype",
+    "asset_class":            "Asset Class",
+    "development":            "Development",
+    "stage":                  "Stage",
+    "status":                 "Status",
+    "date_closed":            "Date Closed",
+}
+
+
+def _to_date(value: str) -> datetime.date:
+    """Parse a stored YYYY-MM-DD string to datetime.date; fall back to today."""
+    try:
+        return datetime.date.fromisoformat(value) if value else datetime.date.today()
+    except ValueError:
+        return datetime.date.today()
+
+
+def _selectbox_index(options: list, value: str) -> int:
+    """Return the index of value in options, or 0 if not found."""
+    return options.index(value) if value in options else 0
+
+
+# -----------------------------------------------------------------------
 
 init_deals_collection()
 
 st.title("Business Development")
-st.caption("Deal pipeline — MongoDB integration test")
+st.caption("Deal pipeline")
 
-# --- Sidebar: refresh + filters ---
+# --- Sidebar: filters + refresh ---
 with st.sidebar:
-    if st.button("🔄 Refresh"):
-        st.rerun()
-
-    st.divider()
     st.subheader("Filters")
-
-    # Pull unique values from the full unfiltered dataset for filter options
     all_deals = get_all_deals()
-    stage_options  = ["All"] + sorted({d["stage"]  for d in all_deals})
-    status_options = ["All"] + sorted({d["status"] for d in all_deals})
-
+    stage_options  = ["All"] + sorted({d.get("stage",  "") for d in all_deals})
+    status_options = ["All"] + sorted({d.get("status", "") for d in all_deals})
     stage_filter  = st.selectbox("Stage",  stage_options)
     status_filter = st.selectbox("Status", status_options)
+    st.divider()
 
-# Build filter dict from sidebar selections; empty dict = no filter
 filters = {}
-if stage_filter  != "All":
-    filters["stage"]  = stage_filter
-if status_filter != "All":
-    filters["status"] = status_filter
+if stage_filter  != "All": filters["stage"]  = stage_filter
+if status_filter != "All": filters["status"] = status_filter
 
-# Re-query only if filters are active, otherwise reuse the already-fetched data
 deals = get_all_deals(filters) if filters else all_deals
 
 # --- Deals Table ---
 st.subheader("Deals")
 if deals:
-    st.dataframe(pd.DataFrame(deals), width='stretch', hide_index=True)
+    df = pd.DataFrame(deals).rename(columns=_COL_LABELS)
+    st.dataframe(df, use_container_width=True, hide_index=True)
 else:
     st.info("No deals match the current filters.")
+
+if st.button("↺ Refresh"):
+    st.rerun()
+# --- Deals Table ---
 
 # --- Edit Form ---
 st.divider()
@@ -51,23 +89,77 @@ if not all_deals:
 else:
     deal_lookup = {d["deal_name"]: d for d in all_deals}
 
-    # Dropdown is OUTSIDE the form so changing it triggers an immediate rerun,
-    # allowing the form fields below to populate with the correct deal's values
-    # before the user edits anything or clicks Save.
+    # Outside the form so switching deals reruns the page and repopulates fields
     selected_name = st.selectbox("Deal", options=list(deal_lookup.keys()))
-    selected = deal_lookup[selected_name]
+    s = deal_lookup[selected_name]  # shorthand for selected deal
 
     with st.form("edit_deal_form"):
-        new_stage = st.selectbox(
-            "Stage", options=STAGES,
-            index=STAGES.index(selected["stage"]) if selected["stage"] in STAGES else 0
+
+        # Row 1 — dates
+        c1, c2 = st.columns(2)
+        date_received = c1.date_input("Date Received", value=_to_date(s.get("date_received", "")))
+        date_closed   = c2.date_input("Date Closed",   value=_to_date(s.get("date_closed",   "")))
+
+        # Row 2 — location
+        c1, c2, c3 = st.columns([3, 1, 1])
+        city     = c1.text_input("City",     value=s.get("city",     ""))
+        state    = c2.selectbox("State",    US_STATES, index=_selectbox_index(US_STATES, s.get("state", "GA")))
+        zip_code = c3.text_input("Zip Code", value=s.get("zip_code", ""))
+
+        # Row 3 — people
+        c1, c2, c3 = st.columns(3)
+        tcm_originator    = c1.text_input("TCM Originator",    value=s.get("tcm_originator",    ""))
+        broker            = c2.text_input("Broker",            value=s.get("broker",            ""))
+        brokerage_company = c3.text_input("Brokerage Company", value=s.get("brokerage_company", ""))
+
+        # Row 4 — dollars
+        c1, c2 = st.columns(2)
+        fund_investment_amount = c1.number_input(
+            "Fund Investment Amount ($)", min_value=0.0, step=10000.0,
+            value=float(s.get("fund_investment_amount", 0))
         )
-        new_city  = st.text_input("City", value=selected["city"])
-        submitted = st.form_submit_button("Save")
+        deal_size = c2.number_input(
+            "Deal Size ($)", min_value=0.0, step=10000.0,
+            value=float(s.get("deal_size", 0))
+        )
+
+        # Row 5 — deal classification
+        c1, c2, c3, c4 = st.columns(4)
+        deal_type    = c1.selectbox("Deal Type",    DEAL_TYPES,    index=_selectbox_index(DEAL_TYPES,    s.get("deal_type",    "")))
+        deal_subtype = c2.selectbox("Deal Subtype", DEAL_SUBTYPES, index=_selectbox_index(DEAL_SUBTYPES, s.get("deal_subtype", "")))
+        asset_class  = c3.selectbox("Asset Class",  ASSET_CLASSES, index=_selectbox_index(ASSET_CLASSES, s.get("asset_class",  "")))
+        development  = c4.selectbox("Development",  DEVELOPMENTS,  index=_selectbox_index(DEVELOPMENTS,  s.get("development",  "")))
+
+        # Row 6 — pipeline status
+        c1, c2 = st.columns(2)
+        stage  = c1.selectbox("Stage",  STAGES,   index=_selectbox_index(STAGES,   s.get("stage",  "")))
+        status = c2.selectbox("Status", STATUSES, index=_selectbox_index(STATUSES, s.get("status", "")))
+
+        # ✅ submit button
+        submitted = st.form_submit_button("Save ✔", use_container_width=True)
 
     if submitted:
-        updated = update_deal(selected["id"], stage=new_stage, city=new_city)
+        updated = update_deal(
+            s["id"],
+            date_received          = date_received.isoformat(),
+            date_closed            = date_closed.isoformat(),
+            city                   = city,
+            state                  = state,
+            zip_code               = zip_code,
+            tcm_originator         = tcm_originator,
+            broker                 = broker,
+            brokerage_company      = brokerage_company,
+            fund_investment_amount = fund_investment_amount,
+            deal_size              = deal_size,
+            deal_type              = deal_type,
+            deal_subtype           = deal_subtype,
+            asset_class            = asset_class,
+            development            = development,
+            stage                  = stage,
+            status                 = status,
+        )
         if updated:
-            st.success(f"'{selected_name}' → stage: '{new_stage}', city: '{new_city}'")
+            st.success(f"'{selected_name}' saved. ↺ Refresh to see changes.")
         else:
-            st.error(f"No deal found with id {selected['id']}.")
+            st.error(f"No deal found with id {s['id']}.")
+# --- Edit Form ---
