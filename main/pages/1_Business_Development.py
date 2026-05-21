@@ -73,7 +73,7 @@ st.markdown(
     </style>
     """,
     unsafe_allow_html=True,
-)
+) # Sets color of save button 🟢
 
 # --- Sidebar: filters + refresh ---
 with st.sidebar:
@@ -119,7 +119,7 @@ else:
     with st.form("edit_deal_form"):
 
         # Deal name — full width at top
-        deal_name = st.text_input("Deal Name", value=s.get("deal_name", ""))
+        deal_name = st.text_input("Deal Name", value=s.get("deal_name", ""), placeholder="ex: Peachtree Corners NPL, Bigfork Land")
 
         # Row 1 — dates
         c1, c2 = st.columns(2)
@@ -133,7 +133,7 @@ else:
 
         # Row 2 — location
         c1, c2, c3 = st.columns([3, 1, 1])
-        city     = c1.text_input("City",     value=s.get("city",     ""))
+        city     = c1.text_input("City",     value=s.get("city",     ""), placeholder="ex: Atlanta, Chattanooga")
         state    = c2.selectbox("State",    US_STATES, index=_selectbox_index(US_STATES, s.get("state", "GA")))
         zip_code = c3.text_input("Zip Code", value=s.get("zip_code", ""))
 
@@ -155,11 +155,13 @@ else:
         )
 
         # Row 5 — deal classification
-        c1, c2, c3, c4 = st.columns(4)
-        deal_type    = c1.selectbox("Deal Type",    DEAL_TYPES,    index=_selectbox_index(DEAL_TYPES,    s.get("deal_type",    "")))
-        deal_subtype = c2.selectbox("Deal Subtype", DEAL_SUBTYPES, index=_selectbox_index(DEAL_SUBTYPES, s.get("deal_subtype", "")))
-        asset_class  = c3.selectbox("Asset Class",  ASSET_CLASSES, index=_selectbox_index(ASSET_CLASSES, s.get("asset_class",  "")))
-        development  = c4.selectbox("Development",  DEVELOPMENTS,  index=_selectbox_index(DEVELOPMENTS,  s.get("development",  "")))
+        c1, c2 = st.columns(2)
+        deal_type    = c1.text_input("Deal Type",    value=s.get("deal_type",    ""), placeholder="Debt, Equity, NPL, ...")
+        deal_subtype = c2.text_input("Deal Subtype", value=s.get("deal_subtype", ""), placeholder="Co-GP, Mezzanine, ...")
+
+        c1, c2 = st.columns([3, 1])
+        asset_class = c1.text_input("Asset Class", value=s.get("asset_class", ""), placeholder="Retail, Multifamily, Mobile Home Park, ...")
+        development = c2.selectbox("Development",  DEVELOPMENTS,  index=_selectbox_index(DEVELOPMENTS,  s.get("development",  "")))
 
         # Row 6 — pipeline status
         c1, c2 = st.columns(2)
@@ -181,14 +183,14 @@ else:
             zip_code               = zip_code,
             tcm_originator         = tcm_originator,
             broker                 = broker,
-            brokerage_company      = brokerage_company,
-            fund_investment_amount = fund_investment_amount,
-            deal_size              = deal_size,
-            deal_type              = deal_type,
-            deal_subtype           = deal_subtype,
-            asset_class            = asset_class,
-            development            = development,
-            stage                  = stage,
+                brokerage_company      = brokerage_company,
+                fund_investment_amount = fund_investment_amount,
+                deal_size              = deal_size,
+                deal_type              = deal_type,
+                deal_subtype           = deal_subtype,
+                asset_class            = asset_class,
+                development            = development,
+                stage                  = stage,
             status                 = status,
         )
         if updated:

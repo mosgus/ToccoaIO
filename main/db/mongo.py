@@ -14,12 +14,12 @@ _DB_NAME  = "toccoaIO_db"
 _COL_NAME = "deal_pipeline"
 
 # --- Dropdown option lists ---
-STAGES      = ["Initial Review", "Term Sheet Out", "Due Diligence", "Approved", "Closed", "Dead"]
+STAGES      = ["Initial Review", "Closing", "Full Underwriting Memo", "Term Sheet Out", "Term Sheet Signed", "Possible Future Opportunity"]
 STATUSES    = ["Active", "Inactive"]
-DEAL_TYPES  = ["Equity", "Debt", "NPL", "Mezzanine", "Bridge", "Construction"]
-DEAL_SUBTYPES  = ["Senior", "Junior", "First Lien", "Second Lien", "Preferred Equity", "Common Equity", "Other"]
+DEAL_TYPES  = ["Equity", "Debt", "NPL", "Hybrid", "Other"]
+DEAL_SUBTYPES  = ["Co-GP", "Construction Loan", "JV Equity", "Second Lien", "Preferred Equity", "Common Equity", "Other"]
 ASSET_CLASSES  = ["Multifamily", "Office", "Retail", "Industrial", "Hospitality", "Mixed-Use", "Land", "Healthcare", "Self-Storage", "Other"]
-DEVELOPMENTS   = ["Ground-Up", "Value-Add", "Stabilized", "Repositioning", "Distressed", "Other"]
+DEVELOPMENTS   = ["Yes", "No"]
 US_STATES = [
     "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
     "KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ",
