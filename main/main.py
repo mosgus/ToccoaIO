@@ -1,5 +1,4 @@
 from pathlib import Path
-
 import streamlit as st
 
 APP_ICON = Path(__file__).resolve().parent.parent / "app_assets" / "logo.PNG"
@@ -18,7 +17,7 @@ pg = st.navigation([
     st.Page("pages/2_Asset_Management.py", title="Asset Management ⚛"),
     st.Page("pages/3_Reporting.py", title="Reporting ⚠"),
     st.Page("pages/4_Research.py", title="Research ⌕"),
-    st.Page("pages/5_Extra.py", title="Extra⋯"),
+    st.Page("pages/5_Extra.py", title="⋯"),
 ])
 
 pg.run()
