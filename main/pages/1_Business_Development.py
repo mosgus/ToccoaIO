@@ -5,8 +5,7 @@ import pandas as pd
 # ❗ ignore unresolved references — Streamlit adds main/ to sys.path
 from db.mongo import (
     init_deals_collection, get_all_deals, update_deal,
-    STAGES, STATUSES, DEAL_TYPES, DEAL_SUBTYPES,
-    ASSET_CLASSES, DEVELOPMENTS, US_STATES,
+    STAGES, STATUSES, DEVELOPMENTS, US_STATES,
 )
 
 # Human-readable column labels for the dataframe display
@@ -106,11 +105,11 @@ if st.button("↺ Refresh"):
 # --- Edit Form ---
 st.divider()
 
-with st.expander("Edit Deal", expanded=False):
-    if not all_deals:
-        st.warning("No deals available to edit.")
+with st.expander("Edit Deal ✎", expanded=False):
+    if not deals:
+        st.warning("No deals match the current filters." if filters else "No deals available to edit.")
     else:
-        deal_lookup = {d["deal_name"]: d for d in all_deals}
+        deal_lookup = {d["deal_name"]: d for d in deals}
 
         selected_name = st.selectbox("Deal", options=list(deal_lookup.keys()))
         s = deal_lookup[selected_name]
