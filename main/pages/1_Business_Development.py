@@ -50,7 +50,7 @@ def _selectbox_index(options: list, value: str) -> int:
 init_deals_collection()
 
 st.title("Business Development")
-st.caption("Deal pipeline")
+st.caption("Edit, Delete, Add-to, & Filter the Deal pipeline")
 
 st.markdown(
     """
@@ -75,105 +75,106 @@ st.markdown(
     unsafe_allow_html=True,
 ) # Sets color of save button 🟢
 
+#--- Deals table ---
 all_deals = get_all_deals()
 
-with st.sidebar:
-    with st.expander("Filters", expanded=False):
+if "filt_v" not in st.session_state:
+    st.session_state.filt_v = 0
+fv = st.session_state.filt_v
 
-        # Deal
+# Reserve the table's visual position — filled after filters are defined
+table_container = st.container()
+
+# --- Filters Form ---
+with st.expander("Filters", expanded=False, key=f"filters_expander_{fv}"):
+
+    # Row 1: Deal | Originator/Broker
+    row1_c1, row1_c2 = st.columns(2)
+
+    with row1_c1:
         with st.expander("Deal", expanded=False):
             dt_col1, dt_col2 = st.columns(2)
-            deal_type_filter = dt_col1.multiselect("Deal Type",
-                                                   sorted({d.get("deal_type", "") for d in all_deals if
-                                                           d.get("deal_type")}), placeholder=" ")
-            deal_subtype_filter = dt_col2.multiselect("Deal Subtype",
-                                                      sorted({d.get("deal_subtype", "") for d in all_deals if
-                                                              d.get("deal_subtype")}), placeholder=" ")
+            deal_type_filter    = dt_col1.multiselect("Deal Type",    sorted({d.get("deal_type",    "") for d in all_deals if d.get("deal_type")}),    placeholder=" ", key=f"filt_deal_type_{fv}")
+            deal_subtype_filter = dt_col2.multiselect("Deal Subtype", sorted({d.get("deal_subtype", "") for d in all_deals if d.get("deal_subtype")}), placeholder=" ", key=f"filt_deal_subtype_{fv}")
             ac_col1, ac_col2 = st.columns(2)
-            asset_class_filter = ac_col1.multiselect("Asset Class",
-                                                     sorted({d.get("asset_class", "") for d in all_deals if
-                                                             d.get("asset_class")}), placeholder=" ")
-            development_filter = ac_col2.multiselect("Development",
-                                                     sorted({d.get("development", "") for d in all_deals if
-                                                             d.get("development")}), placeholder=" ")
-
-            st.markdown('<p style="font-size:0.875rem; margin-bottom:0;">Fund Investment Amount ($)</p>',
-                        unsafe_allow_html=True)
+            asset_class_filter  = ac_col1.multiselect("Asset Class",  sorted({d.get("asset_class",  "") for d in all_deals if d.get("asset_class")}),  placeholder=" ", key=f"filt_asset_class_{fv}")
+            development_filter  = ac_col2.multiselect("Development",  sorted({d.get("development",  "") for d in all_deals if d.get("development")}),  placeholder=" ", key=f"filt_development_{fv}")
+            st.markdown('<p style="font-size:0.875rem; margin-bottom:0;">Fund Investment ($)</p>', unsafe_allow_html=True)
             fi_col1, fi_col2 = st.columns(2)
-            fi_col1.markdown(
-                '<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">Min</p>',
-                unsafe_allow_html=True)
-            fi_col2.markdown(
-                '<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">Max</p>',
-                unsafe_allow_html=True)
-            fi_min = fi_col1.number_input("FI Min", value=None, min_value=0.0, step=10000.0,
-                                          label_visibility="collapsed", placeholder="Min")
-            fi_max = fi_col2.number_input("FI Max", value=None, min_value=0.0, step=10000.0,
-                                          label_visibility="collapsed", placeholder="Max")
-
+            fi_col1.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">Min</p>', unsafe_allow_html=True)
+            fi_col2.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">Max</p>', unsafe_allow_html=True)
+            fi_min = fi_col1.number_input("FI Min", value=None, min_value=0.0, step=10000.0, label_visibility="collapsed", placeholder="Min", key=f"filt_fi_min_{fv}")
+            fi_max = fi_col2.number_input("FI Max", value=None, min_value=0.0, step=10000.0, label_visibility="collapsed", placeholder="Max", key=f"filt_fi_max_{fv}")
             st.markdown('<p style="font-size:0.875rem; margin-bottom:0;">Deal Size ($)</p>', unsafe_allow_html=True)
             ds_col1, ds_col2 = st.columns(2)
-            ds_col1.markdown(
-                '<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">Min</p>',
-                unsafe_allow_html=True)
-            ds_col2.markdown(
-                '<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">Max</p>',
-                unsafe_allow_html=True)  # the long style strings are meant to shrink aesthetic gap.
-            ds_min = ds_col1.number_input("DS Min", value=None, min_value=0.0, step=10000.0,
-                                          label_visibility="collapsed", placeholder="Min")
-            ds_max = ds_col2.number_input("DS Max", value=None, min_value=0.0, step=10000.0,
-                                          label_visibility="collapsed", placeholder="Max")
+            ds_col1.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">Min</p>', unsafe_allow_html=True)
+            ds_col2.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">Max</p>', unsafe_allow_html=True)
+            ds_min = ds_col1.number_input("DS Min", value=None, min_value=0.0, step=10000.0, label_visibility="collapsed", placeholder="Min", key=f"filt_ds_min_{fv}")
+            ds_max = ds_col2.number_input("DS Max", value=None, min_value=0.0, step=10000.0, label_visibility="collapsed", placeholder="Max", key=f"filt_ds_max_{fv}")
 
-        # People — TCM Originator, Brokerage Co., Broker
+    with row1_c2:
         with st.expander("Originator/Broker", expanded=False):
             originator_options = sorted({d.get("tcm_originator", "") for d in all_deals if d.get("tcm_originator")})
-            originator_filter = st.multiselect("TCM Originator", originator_options, placeholder=" ")
-
+            originator_filter = st.multiselect("TCM Originator", originator_options, placeholder=" ", key=f"filt_originator_{fv}")
             brok_col1, brok_col2 = st.columns(2)
-            brokerage_filter = brok_col1.multiselect("Brokerage Co.",
-                sorted({d.get("brokerage_company", "") for d in all_deals if d.get("brokerage_company")}), placeholder=" ")
-            broker_pool = [d for d in all_deals if not brokerage_filter or d.get("brokerage_company") in brokerage_filter]
-            broker_filter = brok_col2.multiselect("Broker",
-                sorted({d.get("broker", "") for d in broker_pool if d.get("broker")}), placeholder=" ")
+            brokerage_filter  = brok_col1.multiselect("Brokerage Co.", sorted({d.get("brokerage_company", "") for d in all_deals if d.get("brokerage_company")}), placeholder=" ", key=f"filt_brokerage_{fv}")
+            broker_pool       = [d for d in all_deals if not brokerage_filter or d.get("brokerage_company") in brokerage_filter]
+            broker_filter     = brok_col2.multiselect("Broker",        sorted({d.get("broker", "") for d in broker_pool if d.get("broker")}), placeholder=" ", key=f"filt_broker_{fv}")
 
-        # Stage / Status
+    # Row 2: Stage/Status | Location
+    row2_c1, row2_c2 = st.columns(2)
+
+    with row2_c1:
         with st.expander("Stage/Status", expanded=False):
-            stage_options = sorted({d.get("stage", "") for d in all_deals if d.get("stage")})
-            stage_filter = st.multiselect("Stage", stage_options, placeholder=" ")
+            stage_options  = sorted({d.get("stage", "") for d in all_deals if d.get("stage")})
+            stage_filter   = st.multiselect("Stage", stage_options, placeholder=" ", key=f"filt_stage_{fv}")
             status_options = ["All"] + sorted({d.get("status", "") for d in all_deals if d.get("status")})
-            status_filter = st.selectbox("Status", status_options)
+            status_filter  = st.selectbox("Status", status_options, key=f"filt_status_{fv}")
 
-        # Location — cascading
+    with row2_c2:
         with st.expander("Location", expanded=False):
-            state_filter = st.multiselect("State",
-                sorted({d.get("state", "") for d in all_deals if d.get("state")}), placeholder=" ")
-            city_pool = [d for d in all_deals if not state_filter or d.get("state") in state_filter]
+            state_filter = st.multiselect("State", sorted({d.get("state", "") for d in all_deals if d.get("state")}), placeholder=" ", key=f"filt_state_{fv}")
+            city_pool    = [d for d in all_deals if not state_filter or d.get("state") in state_filter]
             city_col, zip_col = st.columns(2)
             with city_col:
-                city_filter = st.multiselect("City",
-                    sorted({d.get("city", "") for d in city_pool if d.get("city")}), placeholder=" ")
+                city_filter = st.multiselect("City",     sorted({d.get("city",     "") for d in city_pool if d.get("city")}),     placeholder=" ", key=f"filt_city_{fv}")
             zip_pool = [d for d in city_pool if not city_filter or d.get("city") in city_filter]
             with zip_col:
-                zip_filter = st.multiselect("Zip Code",
-                    sorted({d.get("zip_code", "") for d in zip_pool if d.get("zip_code")}), placeholder=" ")
+                zip_filter  = st.multiselect("Zip Code", sorted({d.get("zip_code", "") for d in zip_pool if d.get("zip_code")}), placeholder=" ", key=f"filt_zip_{fv}")
 
-        # Dates
+    # Row 3: Dates | Reset button
+    row3_c1, row3_c2 = st.columns(2)
+
+    with row3_c1:
         with st.expander("Dates", expanded=False):
             st.markdown('<p style="font-size:0.875rem; margin-bottom:0;">Date Received</p>', unsafe_allow_html=True)
             dr_col1, dr_col2 = st.columns(2)
             dr_col1.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">From</p>', unsafe_allow_html=True)
-            dr_col2.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">To</p>', unsafe_allow_html=True)
-            date_from = dr_col1.date_input("From", value=None, label_visibility="collapsed", min_value=datetime.date(2000, 1, 1))
-            date_to   = dr_col2.date_input("To",   value=None, label_visibility="collapsed", min_value=datetime.date(2000, 1, 1))
-
+            dr_col2.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">To</p>',   unsafe_allow_html=True)
+            date_from   = dr_col1.date_input("From",        value=None, label_visibility="collapsed", min_value=datetime.date(2015, 1, 1), key=f"filt_date_from_{fv}")
+            date_to     = dr_col2.date_input("To",          value=None, label_visibility="collapsed", min_value=datetime.date(2015, 1, 1), key=f"filt_date_to_{fv}")
             st.markdown('<p style="font-size:0.875rem; margin-bottom:0;">Date Closed</p>', unsafe_allow_html=True)
             dc_col1, dc_col2 = st.columns(2)
             dc_col1.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">From</p>', unsafe_allow_html=True)
-            dc_col2.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">To</p>', unsafe_allow_html=True)
-            closed_from = dc_col1.date_input("Closed From", value=None, label_visibility="collapsed", min_value=datetime.date(2000, 1, 1))
-            closed_to   = dc_col2.date_input("Closed To",   value=None, label_visibility="collapsed", min_value=datetime.date(2000, 1, 1))
+            dc_col2.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">To</p>',   unsafe_allow_html=True)
+            closed_from = dc_col1.date_input("Closed From", value=None, label_visibility="collapsed", min_value=datetime.date(2015, 1, 1), key=f"filt_closed_from_{fv}")
+            closed_to   = dc_col2.date_input("Closed To",   value=None, label_visibility="collapsed", min_value=datetime.date(2015, 1, 1), key=f"filt_closed_to_{fv}")
+
+    #with row3_c2:
+    #    if st.button("↩ Reset Filters", key="reset_filters_inner"):
+    #        st.session_state.filt_v += 1
+    #        st.rerun()
+
+btn_c1, btn_c2 = st.columns(2)
+if btn_c1.button("↩ Reset Filters", width="stretch", key="reset_filters_outer"):
+    st.session_state.filt_v += 1
+    st.rerun()
+if btn_c2.button("↺ Refresh Table", width="stretch"):
+    st.session_state.expander_key += 1
+    st.rerun()
 
 
+# Build filters from widget values
 filters = {}
 if originator_filter:        filters["tcm_originator"]    = {"$in": originator_filter}
 if brokerage_filter:         filters["brokerage_company"] = {"$in": brokerage_filter}
@@ -210,25 +211,24 @@ if closed_from or closed_to:
 
 deals = get_all_deals(filters) if filters else all_deals
 
-# --- Deals Table ---
-st.subheader("Deals")
-if deals:
-    df = pd.DataFrame(deals).rename(columns=_COL_LABELS)
-    st.dataframe(df, width='stretch', hide_index=True)
-else:
-    st.info("No deals match the current filters.")
+# --- Fill table container (renders at top, above the Filters expander) ---
+with table_container:
+    st.subheader("Deal Pipeline table")
+    if deals:
+        df = pd.DataFrame(deals).rename(columns=_COL_LABELS)
+        st.dataframe(df, width='stretch', hide_index=True)
+    else:
+        st.info("No deals match the current filters.")
 
 if "expander_key" not in st.session_state:
     st.session_state.expander_key = 0
-
-if st.button("↺ Refresh"):
-    st.session_state.expander_key += 1
-    st.rerun()
+    
+st.divider()
 
 # --- Edit Form ---
 st.divider()
 
-with st.expander("Edit Deal ✎", expanded=False, key=f"edit_expander_{st.session_state.expander_key}"):
+with st.expander("Edit/Delete Deal ✎", expanded=False, key=f"edit_expander_{st.session_state.expander_key}"):
     if not deals:
         st.warning("No deals match the current filters." if filters else "No deals available to edit.")
     else:
