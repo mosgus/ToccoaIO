@@ -16,10 +16,10 @@ st.set_page_config(
 # Define navigation first — suppresses auto-discovery, pg.run() only called after auth
 pg = st.navigation([
     st.Page("pages/home.py",                   title="Home ⌂"),
-    st.Page("pages/1_Business_Development.py", title="Business Development ⚒"),
-    st.Page("pages/2_Asset_Management.py",     title="Asset Management ⚛"),
-    st.Page("pages/3_Reporting.py",            title="Reporting ⚠"),
-    st.Page("pages/4_Research.py",             title="Research ⌕"),
+    st.Page("pages/1_Business_Development.py", title="Business Development"),
+    st.Page("pages/2_Asset_Management.py",     title="Asset Management"),
+    st.Page("pages/3_Reporting.py",            title="Reporting"),
+    st.Page("pages/4_Research.py",             title="Research"),
     st.Page("pages/5_Extra.py",                title="⋯"),
 ])
 
@@ -79,7 +79,7 @@ def _show_passkey_gate():
             border-color: #4f8cff !important;
         }
         </style>
-        """,
+        """, # button
         unsafe_allow_html=True,
     )
 
