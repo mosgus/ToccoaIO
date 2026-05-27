@@ -9,7 +9,7 @@ st.markdown("""
 TCM.io is an internal toolset for TCM's workflow.
 Use the navigation tabs on the left to access each module.
 
-Visit https://tcm-io-new.streamlit.app/ to see prototype features.
+This is the webapp for seeing prototype features. Expect bugs/errors.
 
 | Module | Status | Description |
 |---|---|---|
