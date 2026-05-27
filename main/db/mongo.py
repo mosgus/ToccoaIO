@@ -113,6 +113,23 @@ def get_all_deals(filters: dict = None) -> list[dict]:
         return []
 
 
+def add_deal(**kwargs) -> bool:
+    """Insert a new deal document, auto-incrementing the id field.
+
+    Returns:
+        True on success, False otherwise.
+    """
+    try:
+        col = get_mongo_client()[_DB_NAME][_COL_NAME]
+        last = col.find_one(sort=[("id", -1)])
+        kwargs["id"] = (last["id"] + 1) if last else 1
+        col.insert_one(kwargs)
+        return True
+    except Exception as e:
+        st.error(f"Failed to add deal: {e}")
+        return False
+
+
 def delete_deal(deal_id: int) -> bool:
     """Permanently delete a deal document by id.
 

@@ -4,7 +4,7 @@ import pandas as pd
 
 # ❗ ignore unresolved references — Streamlit adds main/ to sys.path
 from db.mongo import (
-    init_deals_collection, get_all_deals, update_deal, delete_deal,
+    init_deals_collection, get_all_deals, update_deal, delete_deal, add_deal,
     STAGES, STATUSES, DEVELOPMENTS, US_STATES,
 )
 
@@ -111,14 +111,14 @@ with st.expander("Filters", expanded=False, key=f"filters_expander_{fv}"):
             fi_col1, fi_col2 = st.columns(2)
             fi_col1.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">Min</p>', unsafe_allow_html=True)
             fi_col2.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">Max</p>', unsafe_allow_html=True)
-            fi_min = fi_col1.number_input("FI Min", value=None, min_value=0.0, step=10000.0, label_visibility="collapsed", placeholder="Min", key=f"filt_fi_min_{fv}")
-            fi_max = fi_col2.number_input("FI Max", value=None, min_value=0.0, step=10000.0, label_visibility="collapsed", placeholder="Max", key=f"filt_fi_max_{fv}")
+            fi_min = fi_col1.number_input("FI Min", value=None, min_value=0, step=10000, label_visibility="collapsed", placeholder="Min", key=f"filt_fi_min_{fv}")
+            fi_max = fi_col2.number_input("FI Max", value=None, min_value=0, step=10000, label_visibility="collapsed", placeholder="Max", key=f"filt_fi_max_{fv}")
             st.markdown('<p style="font-size:0.875rem; margin-bottom:0;">Deal Size ($)</p>', unsafe_allow_html=True)
             ds_col1, ds_col2 = st.columns(2)
             ds_col1.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">Min</p>', unsafe_allow_html=True)
             ds_col2.markdown('<p style="font-size:0.75rem; margin-bottom:-0.1rem; color:rgba(250,250,250,0.6);">Max</p>', unsafe_allow_html=True)
-            ds_min = ds_col1.number_input("DS Min", value=None, min_value=0.0, step=10000.0, label_visibility="collapsed", placeholder="Min", key=f"filt_ds_min_{fv}")
-            ds_max = ds_col2.number_input("DS Max", value=None, min_value=0.0, step=10000.0, label_visibility="collapsed", placeholder="Max", key=f"filt_ds_max_{fv}")
+            ds_min = ds_col1.number_input("DS Min", value=None, min_value=0, step=10000, label_visibility="collapsed", placeholder="Min", key=f"filt_ds_min_{fv}")
+            ds_max = ds_col2.number_input("DS Max", value=None, min_value=0, step=10000, label_visibility="collapsed", placeholder="Max", key=f"filt_ds_max_{fv}")
 
     with row1_c2:
         with st.expander("Originator/Broker", expanded=False):
@@ -224,6 +224,9 @@ with table_container:
     st.subheader("Deal Pipeline table")
     if deals:
         df = pd.DataFrame(deals).rename(columns=_COL_LABELS)
+        for col in ("Fund Investment Amount", "Deal Size"):
+            if col in df.columns:
+                df[col] = df[col].apply(lambda x: f"{int(x):,}" if x not in (None, "", 0) else "")
         st.dataframe(df, width='stretch', hide_index=True)
     else:
         st.info("No deals match the current filters.")
@@ -232,10 +235,11 @@ if "expander_key" not in st.session_state:
     st.session_state.expander_key = 0
     
 st.divider()
-
-# --- Edit Form ---
+# TODO: visualize segments
+'''📊 Visualizations will go here'''
 st.divider()
 
+# --- Edit Form ✏️---
 with st.expander("Edit Deal ✎", expanded=False, key=f"edit_expander_{st.session_state.expander_key}"):
     if not deals:
         st.warning("No deals match the current filters." if filters else "No deals available to edit.")
@@ -268,8 +272,8 @@ with st.expander("Edit Deal ✎", expanded=False, key=f"edit_expander_{st.sessio
             brokerage_company = c3.text_input("Brokerage Company", value=s.get("brokerage_company", ""))
 
             c1, c2 = st.columns(2)
-            fund_investment_amount = c1.number_input("Fund Investment Amount ($)", min_value=0.0, step=10000.0, value=float(s.get("fund_investment_amount", 0)))
-            deal_size              = c2.number_input("Deal Size ($)",              min_value=0.0, step=10000.0, value=float(s.get("deal_size", 0)))
+            fund_investment_amount = c1.number_input("Fund Investment Amount ($)", min_value=0, step=10000, value=int(s.get("fund_investment_amount", 0) or 0))
+            deal_size              = c2.number_input("Deal Size ($)",              min_value=0, step=10000, value=int(s.get("deal_size", 0) or 0))
 
             c1, c2 = st.columns(2)
             deal_type    = c1.text_input("Deal Type",    value=s.get("deal_type",    ""), placeholder="e.g. Debt, Equity, NPL")
@@ -298,8 +302,8 @@ with st.expander("Edit Deal ✎", expanded=False, key=f"edit_expander_{st.sessio
                 tcm_originator         = tcm_originator,
                 broker                 = broker,
                 brokerage_company      = brokerage_company,
-                fund_investment_amount = fund_investment_amount,
-                deal_size              = deal_size,
+                fund_investment_amount = int(fund_investment_amount),
+                deal_size              = int(deal_size),
                 deal_type              = deal_type,
                 deal_subtype           = deal_subtype,
                 asset_class            = asset_class,
@@ -312,10 +316,97 @@ with st.expander("Edit Deal ✎", expanded=False, key=f"edit_expander_{st.sessio
             else:
                 st.error(f"No deal found with id {s['id']}.")
 
-        _, _, del_butt = st.columns([1, 1, 0.6])
-        if del_butt.button("🗑 Delete Deal", type="primary", width="stretch"):
-            st.session_state["pending_delete_id"]   = s["id"]
-            st.session_state["pending_delete_name"] = selected_name
+# --- Add Deal ➕---
+_BLANK = "Blank (new deal)"
+
+if "add_expander_key" not in st.session_state:
+    st.session_state.add_expander_key = 0
+with st.expander("(+) Add Deal", expanded=False, key=f"add_expander_{st.session_state.add_expander_key}"):
+    copy_options = [_BLANK] + [d["deal_name"] for d in deals]
+    if st.session_state.get("add_copy_from") not in copy_options:
+        st.session_state["add_copy_from"] = _BLANK
+    copy_from = st.selectbox("Copy from existing deal", options=copy_options, key="add_copy_from")
+    t = deals[[d["deal_name"] for d in deals].index(copy_from)] if copy_from != _BLANK else {}
+
+    with st.form("add_deal_form"):
+        new_deal_name = st.text_input("Deal Name", value=t.get("deal_name", ""), placeholder="ex: Peachtree Corners NPL")
+
+        c1, c2 = st.columns(2)
+        new_date_received = c1.date_input("Date Received", value=_to_date(t.get("date_received", "")), format="YYYY-MM-DD", min_value=datetime.date(2000, 1, 1))
+        new_date_closed   = c2.text_input("Date Closed (YYYY-MM-DD)", value=t.get("date_closed", ""), placeholder="Leave blank if not closed")
+
+        c1, c2, c3 = st.columns([3, 1, 1])
+        new_city     = c1.text_input("City",     value=t.get("city",     ""))
+        new_state    = c2.selectbox("State",     US_STATES, index=_selectbox_index(US_STATES, t.get("state", "GA")))
+        new_zip_code = c3.text_input("Zip Code", value=t.get("zip_code", ""))
+
+        c1, c2, c3 = st.columns(3)
+        new_tcm_originator    = c1.text_input("TCM Originator",    value=t.get("tcm_originator",    ""))
+        new_broker            = c2.text_input("Broker",            value=t.get("broker",            ""))
+        new_brokerage_company = c3.text_input("Brokerage Company", value=t.get("brokerage_company", ""))
+
+        c1, c2 = st.columns(2)
+        new_fund_investment_amount = c1.number_input("Fund Investment Amount ($)", min_value=0, step=10000, value=int(t.get("fund_investment_amount", 0) or 0))
+        new_deal_size              = c2.number_input("Deal Size ($)",              min_value=0, step=10000, value=int(t.get("deal_size", 0) or 0))
+
+        c1, c2 = st.columns(2)
+        new_deal_type    = c1.text_input("Deal Type",    value=t.get("deal_type",    ""), placeholder="e.g. Debt, Equity, NPL")
+        new_deal_subtype = c2.text_input("Deal Subtype", value=t.get("deal_subtype", ""), placeholder="e.g. Co-GP, First Lien, Mezz")
+
+        c1, c2 = st.columns([3, 1])
+        new_asset_class = c1.text_input("Asset Class", value=t.get("asset_class", ""), placeholder="e.g. Retail, Multifamily, Industrial")
+        new_development = c2.selectbox("Development",  DEVELOPMENTS, index=_selectbox_index(DEVELOPMENTS, t.get("development", "")))
+
+        c1, c2 = st.columns(2)
+        new_stage  = c1.selectbox("Stage",  STAGES,   index=_selectbox_index(STAGES,   t.get("stage",  "")))
+        new_status = c2.selectbox("Status", STATUSES, index=_selectbox_index(STATUSES, t.get("status", "")))
+
+        _, add_mid, _ = st.columns([1, 0.75, 1])
+        add_submitted = add_mid.form_submit_button("Add  +", type="primary", width="stretch")
+
+    if add_submitted:
+        added = add_deal(
+            deal_name              = new_deal_name,
+            date_received          = new_date_received.isoformat(),
+            date_closed            = new_date_closed.strip(),
+            city                   = new_city,
+            state                  = new_state,
+            zip_code               = new_zip_code,
+            tcm_originator         = new_tcm_originator,
+            broker                 = new_broker,
+            brokerage_company      = new_brokerage_company,
+            fund_investment_amount = int(new_fund_investment_amount),
+            deal_size              = int(new_deal_size),
+            deal_type              = new_deal_type,
+            deal_subtype           = new_deal_subtype,
+            asset_class            = new_asset_class,
+            development            = new_development,
+            stage                  = new_stage,
+            status                 = new_status,
+        )
+        if added:
+            st.session_state.add_expander_key += 1
+            st.success(f"'{new_deal_name}' added. ↺ Refresh to see it in the table.")
+        else:
+            st.error("Failed to add deal.")
+
+# --- Delete Form ➖---
+if "delete_expander_key" not in st.session_state:
+    st.session_state.delete_expander_key = 0
+with st.expander("(–) Delete Deal", expanded=False, key=f"delete_expander_{st.session_state.delete_expander_key}"):
+    if not deals:
+        st.warning("No deals match the current filters." if filters else "No deals available to delete.")
+    else:
+        del_lookup = {d["deal_name"]: d for d in deals}
+        del_options = list(del_lookup.keys())
+        if st.session_state.get("delete_selected_deal") not in del_options:
+            st.session_state["delete_selected_deal"] = del_options[0]
+        delete_selected = st.selectbox("Select Deal", options=del_options, key="delete_selected_deal")
+        st.write("")
+        _, del_mid, _ = st.columns([1, 0.75, 1])
+        if del_mid.button("🗑 Delete Deal", type="primary", width="stretch"):
+            st.session_state["pending_delete_id"]   = del_lookup[delete_selected]["id"]
+            st.session_state["pending_delete_name"] = delete_selected
 
 @st.dialog("Confirm Delete")
 def _confirm_delete_dialog():
@@ -328,6 +419,7 @@ def _confirm_delete_dialog():
         st.session_state.pop("pending_delete_name", None)
         if deleted:
             st.session_state["selected_deal"] = None
+            st.session_state.delete_expander_key += 1
             st.rerun()
         else:
             st.error("Delete failed.")
