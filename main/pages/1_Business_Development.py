@@ -320,9 +320,17 @@ with st.expander("Edit Deal ✎", expanded=False, key=f"edit_expander_{st.sessio
 # --- Add Deal ➕---
 _BLANK = "Blank (new deal)"
 
+@st.dialog("Bulk Add Deals")
+def _bulk_add_dialog():
+    st.write("Bulk add functionality coming soon.")
+
 if "add_expander_key" not in st.session_state:
     st.session_state.add_expander_key = 0
 with st.expander("(+) Add Deal", expanded=False, key=f"add_expander_{st.session_state.add_expander_key}"):
+    _, _btn, _ = st.columns([2, 1, 2])
+    if _btn.button("Bulk Add ⊞", width="stretch"):
+        _bulk_add_dialog()
+    st.markdown('<hr style="margin-top:-0.1rem; border:none; border-top:1px solid rgba(255,255,255,0.15);">', unsafe_allow_html=True)
     copy_options = [_BLANK] + [d["deal_name"] for d in deals]
     if st.session_state.get("add_copy_from") not in copy_options:
         st.session_state["add_copy_from"] = _BLANK
@@ -347,8 +355,8 @@ with st.expander("(+) Add Deal", expanded=False, key=f"add_expander_{st.session_
         new_brokerage_company = c3.text_input("Brokerage Company", value=t.get("brokerage_company", ""))
 
         c1, c2 = st.columns(2)
-        new_fund_investment_amount = c1.number_input("Fund Investment Amount ($)", min_value=0, step=10000, value=int(t.get("fund_investment_amount", 0) or 0))
-        new_deal_size              = c2.number_input("Deal Size ($)",              min_value=0, step=10000, value=int(t.get("deal_size", 0) or 0))
+        new_fund_investment_amount = c1.number_input("Fund Investment Amount ($)", min_value=0, step=10000, value=int(t["fund_investment_amount"]) if t.get("fund_investment_amount") else None)
+        new_deal_size              = c2.number_input("Deal Size ($)",              min_value=0, step=10000, value=int(t["deal_size"])              if t.get("deal_size")              else None)
 
         c1, c2 = st.columns(2)
         new_deal_type    = c1.text_input("Deal Type",    value=t.get("deal_type",    ""), placeholder="e.g. Debt, Equity, NPL")
@@ -382,8 +390,8 @@ with st.expander("(+) Add Deal", expanded=False, key=f"add_expander_{st.session_
                 tcm_originator         = new_tcm_originator,
                 broker                 = new_broker,
                 brokerage_company      = new_brokerage_company,
-                fund_investment_amount = int(new_fund_investment_amount),
-                deal_size              = int(new_deal_size),
+                fund_investment_amount = int(new_fund_investment_amount) if new_fund_investment_amount is not None else 0,
+                deal_size              = int(new_deal_size)              if new_deal_size              is not None else 0,
                 deal_type              = new_deal_type,
                 deal_subtype           = new_deal_subtype,
                 asset_class            = new_asset_class,
