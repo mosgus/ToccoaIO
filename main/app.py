@@ -17,7 +17,7 @@ st.caption("ver 0.1")
 # Define navigation first — suppresses auto-discovery, pg.run() only called after auth
 pg = st.navigation([
     st.Page("pages/home.py",                   title="Home ⌂"),
-    st.Page("pages/1_Business_Development.py", title="Business Development"),
+    st.Page("pages/Business_Development/Business_Development.py", title="Business Development"),
     st.Page("pages/2_Asset_Management.py",     title="Asset Management"),
     st.Page("pages/3_Reporting.py",            title="Reporting"),
     st.Page("pages/4_Research.py",             title="Research"),

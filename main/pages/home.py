@@ -9,7 +9,7 @@ st.markdown("""
 TCM.io is an internal toolset for TCM's workflow.
 Use the navigation tabs on the left to access each module.
 
-This is the webapp for seeing prototype features. Expect bugs/errors.
+This is the webapp for seeing prototype modules. Expect bugs/errors.
 
 | Module | Status | Description |
 |---|---|---|

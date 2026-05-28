@@ -5,7 +5,7 @@ import pandas as pd
 # ❗ ignore unresolved references — Streamlit adds main/ to sys.path
 from db.mongo import (
     init_deals_collection, get_all_deals, update_deal, delete_deal, add_deal,
-    STAGES, STATUSES, DEVELOPMENTS, US_STATES,
+    STAGES, STATUSES, DEVELOPMENTS, STATES,
 )
 
 # Human-readable column labels for the dataframe display
@@ -14,7 +14,7 @@ _COL_LABELS = {
     "date_received":          "Date Received",
     "deal_name":              "Deal Name",
     "city":                   "City", # Extra Column
-    "state":                  "State",
+    "states":                 "State(s)/Region",
     "zip_code":               "Zip Code",
     "tcm_originator":         "TCM Originator",
     "broker":                 "Broker",
@@ -141,8 +141,8 @@ with st.expander("Filters", expanded=False, key=f"filters_expander_{fv}"):
 
     with row2_c2:
         with st.expander("Location", expanded=False):
-            state_filter = st.multiselect("State", sorted({d.get("state", "") for d in all_deals if d.get("state")}), placeholder=" ", key=f"filt_state_{fv}")
-            city_pool    = [d for d in all_deals if not state_filter or d.get("state") in state_filter]
+            state_filter = st.multiselect("State(s)/Region", sorted({s for d in all_deals for s in d.get("states", []) if s}), placeholder=" ", key=f"filt_state_{fv}")
+            city_pool    = [d for d in all_deals if not state_filter or any(s in state_filter for s in d.get("states", []))]
             city_col, zip_col = st.columns(2)
             with city_col:
                 city_filter = st.multiselect("City",     sorted({d.get("city",     "") for d in city_pool if d.get("city")}),     placeholder=" ", key=f"filt_city_{fv}")
@@ -183,7 +183,7 @@ if originator_filter:        filters["tcm_originator"]    = {"$in": originator_f
 if brokerage_filter:         filters["brokerage_company"] = {"$in": brokerage_filter}
 if broker_filter:            filters["broker"]            = {"$in": broker_filter}
 if city_filter:              filters["city"]     = {"$in": city_filter}
-if state_filter:             filters["state"]    = {"$in": state_filter}
+if state_filter:             filters["states"]   = {"$in": state_filter}
 if zip_filter:               filters["zip_code"] = {"$in": zip_filter}
 if stage_filter:             filters["stage"]        = {"$in": stage_filter}
 if deal_type_filter:         filters["deal_type"]    = {"$in": deal_type_filter}
@@ -222,6 +222,8 @@ with table_container:
         for col in ("Fund Investment Amount", "Deal Size"):
             if col in df.columns:
                 df[col] = df[col].apply(lambda x: f"{int(x):,}" if x not in (None, "", 0) else "")
+        if "State(s)" in df.columns:
+            df["State(s)/Region"] = df["State(s)/Region"].apply(lambda x: ", ".join(x) if isinstance(x, list) else (x or ""))
         st.dataframe(df, width='stretch', hide_index=True)
     else:
         st.info("No deals match the current filters.")
@@ -256,10 +258,10 @@ with st.expander("Edit Deal ✎", expanded=False, key=f"edit_expander_{st.sessio
             date_received = c1.date_input("Date Received", value=_to_date(s.get("date_received", "")), format="YYYY-MM-DD", min_value=datetime.date(2016, 1, 1))
             date_closed   = c2.text_input("Date Closed (YYYY-MM-DD)", value=s.get("date_closed", ""), placeholder="Leave blank if not closed")
 
-            c1, c2, c3 = st.columns([3, 1, 1])
-            city     = c1.text_input("City",     value=s.get("city",     ""))
-            state    = c2.selectbox("State",     US_STATES, index=_selectbox_index(US_STATES, s.get("state", "GA")))
-            zip_code = c3.text_input("Zip Code", value=s.get("zip_code", ""))
+            c1, c2, c3 = st.columns([2, 2, 1])
+            city     = c1.text_input("City",      value=s.get("city",     ""))
+            states   = c2.multiselect("State(s)/Region", STATES, default=[x for x in s.get("states", []) if x in STATES])
+            zip_code = c3.text_input("Zip Code",  value=s.get("zip_code", ""))
 
             c1, c2, c3 = st.columns(3)
             tcm_originator    = c1.text_input("TCM Originator",    value=s.get("tcm_originator",    ""))
@@ -298,7 +300,7 @@ with st.expander("Edit Deal ✎", expanded=False, key=f"edit_expander_{st.sessio
                     date_received          = date_received.isoformat(),
                     date_closed            = date_closed.strip(),
                     city                   = city,
-                    state                  = state,
+                    states                 = states,
                     zip_code               = zip_code,
                     tcm_originator         = tcm_originator,
                     broker                 = broker,
@@ -320,17 +322,33 @@ with st.expander("Edit Deal ✎", expanded=False, key=f"edit_expander_{st.sessio
 # --- Add Deal ➕---
 _BLANK = "Blank (new deal)"
 
+# Bulk Add functionality
 @st.dialog("Bulk Add Deals")
 def _bulk_add_dialog():
+    """
+       TODO:
+                   1. Add upload button, prompting users to supply a .csv or excel file
+                   2. Implement csv upload functionality. Use the /temp/ActiveTable.csv for reference as a potential
+                      uploadable file's format. For simplicity's sake we should mandate a strict formatting for some
+                      aspects of the csv in order to Add deals cleanly and efficiently. This is how the app should
+                      handle the various entries from a csv file:
+                      - # & Deal Name: When pulling # and Deal Name entries from the csv the # and Deal Name should be
+                        the same in the Database as they appear in the csv
+
+    """
     st.write("Bulk add functionality coming soon.")
+
 
 if "add_expander_key" not in st.session_state:
     st.session_state.add_expander_key = 0
 with st.expander("(+) Add Deal", expanded=False, key=f"add_expander_{st.session_state.add_expander_key}"):
+    # Bulk Add button
     _, _btn, _ = st.columns([2, 1, 2])
     if _btn.button("Bulk Add ⊞", width="stretch"):
         _bulk_add_dialog()
     st.markdown('<hr style="margin-top:-0.1rem; border:none; border-top:1px solid rgba(255,255,255,0.15);">', unsafe_allow_html=True)
+
+
     copy_options = [_BLANK] + [d["deal_name"] for d in deals]
     if st.session_state.get("add_copy_from") not in copy_options:
         st.session_state["add_copy_from"] = _BLANK
@@ -344,10 +362,11 @@ with st.expander("(+) Add Deal", expanded=False, key=f"add_expander_{st.session_
         new_date_received = c1.date_input("Date Received", value=_to_date(t.get("date_received", "")), format="YYYY-MM-DD", min_value=datetime.date(2000, 1, 1))
         new_date_closed   = c2.text_input("Date Closed (YYYY-MM-DD)", value=t.get("date_closed", ""), placeholder="Leave blank if not closed")
 
-        c1, c2, c3 = st.columns([3, 1, 1])
-        new_city     = c1.text_input("City",     value=t.get("city",     ""))
-        new_state    = c2.selectbox("State",     US_STATES, index=_selectbox_index(US_STATES, t.get("state", "GA")))
-        new_zip_code = c3.text_input("Zip Code", value=t.get("zip_code", ""))
+        c1, c2, c3 = st.columns([2, 2, 1])
+        new_city     = c1.text_input("City",      value=t.get("city",     ""))
+        new_states   = c2.multiselect("State(s)/Region",
+                                      STATES, default=[x for x in t.get("states", []) if x in STATES])
+        new_zip_code = c3.text_input("Zip Code",  value=t.get("zip_code", ""))
 
         c1, c2, c3 = st.columns(3)
         new_tcm_originator    = c1.text_input("TCM Originator",    value=t.get("tcm_originator",    ""))
@@ -385,7 +404,7 @@ with st.expander("(+) Add Deal", expanded=False, key=f"add_expander_{st.session_
                 date_received          = new_date_received.isoformat(),
                 date_closed            = new_date_closed.strip(),
                 city                   = new_city,
-                state                  = new_state,
+                states                 = new_states,
                 zip_code               = new_zip_code,
                 tcm_originator         = new_tcm_originator,
                 broker                 = new_broker,

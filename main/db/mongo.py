@@ -20,52 +20,46 @@ DEAL_TYPES  = ["Equity", "Debt", "NPL", "Hybrid", "Other"]
 DEAL_SUBTYPES  = ["Co-GP", "Construction Loan", "JV Equity", "Second Lien", "Preferred Equity", "Common Equity", "Other"]
 ASSET_CLASSES  = ["Multifamily", "Office", "Retail", "Industrial", "Hospitality", "Mixed-Use", "Land", "Healthcare", "Self-Storage", "Other"]
 DEVELOPMENTS   = ["Yes", "No"]
-US_STATES = [
+STATES = [
     "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
     "KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ",
     "NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
-    "VA","WA","WV","WI","WY"
+    "VA","WA","WV","WI","WY", # All US States
+
+    "USA", "CAN", "MEX", "NA", "SA", "EU", "CN", # potential regions/nation-states
 ]
 
+
+def parse_state_input(state_str: str) -> list[str]:
+    """Parse comma or space-separated state abbreviations and validate against STATES.
+
+    Args:
+        state_str: e.g. "NC, SC, FL" or "NC,SC,FL" or "NC"
+
+    Returns:
+        List of valid 2-letter state codes, e.g. ["NC", "SC", "FL"].
+        Returns empty list if input is blank or no valid states found.
+    """
+    if not state_str or not state_str.strip():
+        return []
+    parts = [s.strip().upper() for s in state_str.replace(",", " ").split() if s.strip()]
+    return [s for s in parts if s in STATES]
+
+
+# default for empty DB — states stored as arrays
 _SEED_DEALS = [
     {
         "id": 1,
         "date_received": "2025-01-10",
-        "deal_name": "Peachtree Industrial Park",
-        "city": "Atlanta",          "state": "GA",  "zip_code": "30318",
-        "tcm_originator": "Gus",
-        "broker": "John Smith",     "brokerage_company": "CBRE",
-        "fund_investment_amount": 2500000.0,  "deal_size": 12000000.0,
-        "deal_type": "Debt",        "deal_subtype": "First Lien",
-        "asset_class": "Industrial","development": "Stabilized",
-        "stage": "Initial Review",  "status": "Active",
+        "deal_name": "Midwood Rosswell",
+        "city": "Roswell",          "states": ["GA"],  "zip_code": "30075",
+        "tcm_originator": "Barron Garbo",
+        "broker": "Tyler Hogan",     "brokerage_company": "Capstone",
+        "fund_investment_amount": 0,  "deal_size":  6200000,
+        "deal_type": "Equity",        "deal_subtype": "Principal Investment",
+        "asset_class": "Multifamily","development": "No",
+        "stage": "Term Sheet Out",  "status": "Inactive",
         "date_closed": "",
-    },
-    {
-        "id": 2,
-        "date_received": "2025-02-03",
-        "deal_name": "Riverside Office Complex",
-        "city": "Savannah",         "state": "GA",  "zip_code": "31401",
-        "tcm_originator": "G. Balch",
-        "broker": "Sarah Lee",      "brokerage_company": "JLL",
-        "fund_investment_amount": 5000000.0,  "deal_size": 22000000.0,
-        "deal_type": "Equity",      "deal_subtype": "Preferred Equity",
-        "asset_class": "Office",    "development": "Value-Add",
-        "stage": "Term Sheet Out",  "status": "Active",
-        "date_closed": "",
-    },
-    {
-        "id": 3,
-        "date_received": "2024-11-20",
-        "deal_name": "Midtown Retail Strip",
-        "city": "Atlanta",          "state": "GA",  "zip_code": "30309",
-        "tcm_originator": "G. Balch",
-        "broker": "Mike Torres",    "brokerage_company": "Colliers",
-        "fund_investment_amount": 1200000.0,  "deal_size": 6000000.0,
-        "deal_type": "Debt",        "deal_subtype": "Second Lien",
-        "asset_class": "Retail",    "development": "Stabilized",
-        "stage": "Closed",          "status": "Inactive",
-        "date_closed": "2025-01-05",
     }
 ]
 
@@ -115,6 +109,7 @@ def get_all_deals(filters: dict = None) -> list[dict]:
 
 def add_deal(**kwargs) -> bool:
     """Insert a new deal document, auto-incrementing the id field.
+    Pass states as a list: states=["NC", "SC"].
 
     Returns:
         True on success, False otherwise.
@@ -147,10 +142,11 @@ def delete_deal(deal_id: int) -> bool:
 
 def update_deal(deal_id: int, **kwargs) -> bool:
     """Update a deal by id with any provided fields via $set.
+    Pass states as a list: states=["NC", "SC"].
 
     Args:
         deal_id: Integer id of the target deal.
-        **kwargs: Field/value pairs to update, e.g. stage="Closed", city="Macon".
+        **kwargs: Field/value pairs to update.
 
     Returns:
         True if a document was matched, False otherwise.
