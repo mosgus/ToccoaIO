@@ -398,8 +398,8 @@ if "add_expander_key" not in st.session_state:
     st.session_state.add_expander_key = 0
 with st.expander("(+) Add Deal", expanded=False, key=f"add_expander_{st.session_state.add_expander_key}"):
     # Bulk Add button
-    _, _btn, _ = st.columns([2, 1, 2])
-    if _btn.button("Bulk Add ⊞", width="stretch"):
+    _, _, _btn = st.columns([2, 2, 1])
+    if _btn.button("⊞ Bulk Add", width="stretch"):
         _bulk_add_dialog()
     st.markdown('<hr style="margin-top:-0.1rem; border:none; border-top:1px solid rgba(255,255,255,0.15);">', unsafe_allow_html=True)
 
@@ -534,8 +534,8 @@ def _bulk_delete_confirm_dialog():
 if "delete_expander_key" not in st.session_state:
     st.session_state.delete_expander_key = 0
 with st.expander("(–) Delete Deal", expanded=False, key=f"delete_expander_{st.session_state.delete_expander_key}"):
-    _, _bd_btn, _ = st.columns([2, 1, 2])
-    if _bd_btn.button("Bulk Delete ⊟", width="stretch"):
+    _, _, _btn = st.columns([2, 2, 1])
+    if _btn.button("⊟ Bulk Delete", width="stretch"):
         _bulk_delete_range_dialog()
     st.markdown('<hr style="margin-top:0.3rem; margin-bottom:0.4rem; border:none; border-top:1px solid rgba(255,255,255,0.15);">', unsafe_allow_html=True)
     if not deals:
